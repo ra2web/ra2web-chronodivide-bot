@@ -8,6 +8,7 @@ import { MissionController } from "./missionController.js";
 import { DefenceMissionFactory } from "./missions/defenceMission.js";
 import { DebugLogger } from "../common/utils.js";
 import { EngineerMissionFactory } from "./missions/engineerMission.js";
+import { NavalMissionFactory } from "./missions/navalMission.js";
 
 export interface MissionFactory {
     getName(): string;
@@ -48,4 +49,5 @@ export const createMissionFactories = () => [
     new AttackMissionFactory(),
     new DefenceMissionFactory(),
     new EngineerMissionFactory(),
+    new NavalMissionFactory(),
 ];

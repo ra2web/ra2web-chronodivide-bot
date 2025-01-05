@@ -9,22 +9,22 @@ import { Countries, formatTimeDuration } from "./logic/common/utils.js";
 
 const DEBUG_STATE_UPDATE_INTERVAL_SECONDS = 6;
 
-// Number of ticks per second at the base speed.
+// 每秒钟的游戏刻度数（基础速度下）
 const NATURAL_TICK_RATE = 15;
 
 export class SupalosaBot extends Bot {
-    private tickRatio?: number;
-    private knownMapBounds: Size | undefined;
-    private missionController: MissionController;
-    private queueController: QueueController;
-    private tickOfLastAttackOrder: number = 0;
+    private tickRatio?: number;  // 控制AI更新频率的比率
+    private knownMapBounds: Size | undefined;  // 地图边界
+    private missionController: MissionController;  // 任务控制器
+    private queueController: QueueController;  // 建造队列控制器
+    private tickOfLastAttackOrder: number = 0;  // 上次攻击命令的时间点
 
-    private matchAwareness: MatchAwareness | null = null;
+    private matchAwareness: MatchAwareness | null = null;  // 战场态势感知
 
     constructor(
         name: string,
         country: Countries,
-        private tryAllyWith: string[] = [],
+        private tryAllyWith: string[] = [],  // 尝试结盟的玩家名单
         private enableLogging = true,
     ) {
         super(name, country);
@@ -33,11 +33,13 @@ export class SupalosaBot extends Bot {
     }
 
     override onGameStart(game: GameApi) {
+        // 计算AI的操作频率
         const gameRate = game.getTickRate();
-        const botApm = 300;
+        const botApm = 300;  // 机器人的每分钟操作次数
         const botRate = botApm / 60;
         this.tickRatio = Math.ceil(gameRate / botRate);
 
+        // 初始化战场态势感知
         this.knownMapBounds = determineMapBounds(game.mapApi);
         const myPlayer = game.getPlayerData(this.name);
 
@@ -49,8 +51,7 @@ export class SupalosaBot extends Bot {
         );
         this.matchAwareness.onGameStart(game, myPlayer);
 
-        this.logBotStatus(`Map bounds: ${this.knownMapBounds.width}, ${this.knownMapBounds.height}`);
-
+        // 尝试与指定玩家结盟
         this.tryAllyWith
             .filter((playerName) => playerName !== this.name)
             .forEach((playerName) => this.actionsApi.toggleAlliance(playerName, true));
@@ -63,16 +64,18 @@ export class SupalosaBot extends Bot {
 
         const threatCache = this.matchAwareness.getThreatCache();
 
+        // 定期更新调试状态
         if ((game.getCurrentTick() / NATURAL_TICK_RATE) % DEBUG_STATE_UPDATE_INTERVAL_SECONDS === 0) {
             this.updateDebugState(game);
         }
 
+        // 按照设定的频率执行AI逻辑
         if (game.getCurrentTick() % this.tickRatio! === 0) {
             const myPlayer = game.getPlayerData(this.name);
 
             this.matchAwareness.onAiUpdate(game, myPlayer);
 
-            // hacky resign condition
+            // 检查投降条件：当没有作战单位、MCV和生产建筑时
             const armyUnits = game.getVisibleUnits(this.name, "self", (r) => r.isSelectableCombatant);
             const mcvUnits = game.getVisibleUnits(
                 this.name,
@@ -89,14 +92,15 @@ export class SupalosaBot extends Bot {
                 this.actionsApi.quitGame();
             }
 
-            // Mission logic every 3 ticks
+            // 每3个tick执行一次任务逻辑
             if (this.gameApi.getCurrentTick() % 3 === 0) {
                 this.missionController.onAiUpdate(game, this.actionsApi, myPlayer, this.matchAwareness);
             }
 
+            // 获取需要建造的单位类型
             const unitTypeRequests = this.missionController.getRequestedUnitTypes();
 
-            // Build logic.
+            // 执行建造逻辑
             this.queueController.onAiUpdate(
                 game,
                 this.productionApi,

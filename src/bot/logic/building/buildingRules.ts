@@ -22,6 +22,8 @@ import { ResourceCollectionBuilding } from "./resourceCollectionBuilding.js";
 import { Harvester } from "./harvester.js";
 import { uniqBy } from "../common/utils.js";
 import { AntiAirStaticDefence } from "./antiAirStaticDefence.js";
+import { NavalYard } from "./navalYard.js";
+import { WaterAnalyzer } from "../map/waterAnalyzer.js";
 
 export interface AiBuildingRules {
     getPriority(
@@ -167,6 +169,7 @@ export function getDefaultPlacementLocation(
     technoRules: TechnoRules,
     onWater: boolean = false,
     minSpace: number = 1,
+    waterAnalyzer?: WaterAnalyzer,
 ): { rx: number; ry: number } | undefined {
     // Closest possible location near `startPoint`.
     const size: BuildingPlacementData = game.getBuildingPlacementData(technoRules.name);
@@ -176,6 +179,55 @@ export function getDefaultPlacementLocation(
     const tiles = getAdjacencyTiles(game, playerData, technoRules, onWater, minSpace);
     const tileDistances = getTileDistances(idealPoint, tiles);
 
+    // 如果有水域分析器，按照朝向水域的程度对位置进行排序
+    if (waterAnalyzer) {
+        // 获取水域方向
+        const waterDirection = waterAnalyzer.getBuildingExpansionDirection();
+        if (waterDirection) {
+            // 计算每个位置到水域的方向
+            const tileScores = tileDistances.map(td => {
+                const toWater = new Vector2(
+                    waterDirection.x,
+                    waterDirection.y
+                );
+                const tileVector = new Vector2(
+                    td.tile.rx - idealPoint.x,
+                    td.tile.ry - idealPoint.y
+                );
+                
+                // 计算方向相似度（点积）
+                const dotProduct = toWater.x * tileVector.x + toWater.y * tileVector.y;
+                const waterLength = Math.sqrt(toWater.x * toWater.x + toWater.y * toWater.y);
+                const tileLength = Math.sqrt(tileVector.x * tileVector.x + tileVector.y * tileVector.y);
+                const cosAngle = dotProduct / (waterLength * tileLength);
+
+                // 结合距离和方向计算分数
+                // distance 权重为0.4，方向权重为0.6
+                const distanceScore = 1 - (td.distance / 100);  // 归一化距离分数
+                const directionScore = (cosAngle + 1) / 2;  // 将cosAngle转换到0-1范围
+                const score = distanceScore * 0.4 + directionScore * 0.6;
+
+                return {
+                    tile: td.tile,
+                    score
+                };
+            });
+
+            // 按分数排序
+            tileScores.sort((a, b) => b.score - a.score);
+
+            // 尝试按新的顺序放置建筑
+            for (const tileScore of tileScores) {
+                if (game.canPlaceBuilding(playerData.name, technoRules.name, tileScore.tile)) {
+                    console.log("[BuildingRules] 选择建造位置，分数:", tileScore.score.toFixed(2), 
+                              "位置:", tileScore.tile.rx, tileScore.tile.ry);
+                    return tileScore.tile;
+                }
+            }
+        }
+    }
+
+    // 如果没有水域分析器或找不到合适的位置，使用原有逻辑
     for (let tileDistance of tileDistances) {
         if (tileDistance.tile && game.canPlaceBuilding(playerData.name, technoRules.name, tileDistance.tile)) {
             return tileDistance.tile;
@@ -201,7 +253,7 @@ export const BUILDING_NAME_TO_RULES = new Map<string, AiBuildingRules>([
     ["AMRADR", new BasicBuilding(10, 1, 500)], // Airforce Command (USA)
 
     ["GATECH", new BasicBuilding(20, 1, 4000)], // Allied Battle Lab
-    ["GAYARD", new BasicBuilding(0, 0, 0)], // Naval Yard, disabled
+    ["GAYARD", new NavalYard(25, 1)], // Naval Yard - 提高优先级到25
 
     ["GAPILL", new AntiGroundStaticDefence(2, 1, 5, 5)], // Pillbox
     ["ATESLA", new AntiGroundStaticDefence(2, 1, 10, 3)], // Prism Cannon
@@ -217,7 +269,7 @@ export const BUILDING_NAME_TO_RULES = new Map<string, AiBuildingRules>([
     ["ORCA", new BasicAirUnit(7, 1, 2, 0)], // Rocketeer
     ["SREF", new ArtilleryUnit(10, 5, 3, 3)], // Prism Tank
     ["CLEG", new BasicGroundUnit(0, 0)], // Chrono Legionnaire (Disabled - we don't handle the warped out phase properly and it tends to bug both bots out)
-    ["SHAD", new BasicGroundUnit(0, 0)], // Nighthawk (Disabled)
+    ["SHAD", new BasicGroundUnit(0, 0)],
 
     // Soviet
     ["NAPOWR", new PowerPlant()],
@@ -228,7 +280,7 @@ export const BUILDING_NAME_TO_RULES = new Map<string, AiBuildingRules>([
     ["NADEPT", new BasicBuilding(1, 1, 10000)], // Repair Depot
     ["NARADR", new BasicBuilding(10, 1, 500)], // Radar
     ["NANRCT", new PowerPlant()], // Nuclear Reactor
-    ["NAYARD", new BasicBuilding(0, 0, 0)], // Naval Yard, disabled
+    ["NAYARD", new NavalYard(25, 1)], // Naval Yard - 提高优先级到25
 
     ["NATECH", new BasicBuilding(20, 1, 4000)], // Soviet Battle Lab
 
