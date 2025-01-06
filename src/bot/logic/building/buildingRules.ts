@@ -249,22 +249,22 @@ export const BUILDING_NAME_TO_RULES = new Map<string, AiBuildingRules>([
     ["GAPILE", new BasicBuilding(12, 1)], // Barracks
     ["CMIN", new Harvester(15, 4, 2)], // Chrono Miner
     ["GADEPT", new BasicBuilding(1, 1, 10000)], // Repair Depot
-    ["GAAIRC", new BasicBuilding(10, 1, 500)], // Airforce Command
-    ["AMRADR", new BasicBuilding(10, 1, 500)], // Airforce Command (USA)
+    ["GAAIRC", new BasicBuilding(30, 1)], // Airforce Command - DEBUG: 提高优先级
+    ["AMRADR", new BasicBuilding(30, 1)], // Airforce Command (USA) - DEBUG: 提高优先级
 
-    ["GATECH", new BasicBuilding(20, 1, 4000)], // Allied Battle Lab
-    ["GAYARD", new NavalYard(25, 1)], // Naval Yard - 提高优先级到25
+    ["GATECH", new BasicBuilding(35, 1)], // Allied Battle Lab - DEBUG: 提高优先级
+    ["GAYARD", new NavalYard(40, 1)], // Naval Yard - DEBUG: 提高优先级
 
     ["GAPILL", new AntiGroundStaticDefence(2, 1, 5, 5)], // Pillbox
     ["ATESLA", new AntiGroundStaticDefence(2, 1, 10, 3)], // Prism Cannon
     ["NASAM", new AntiAirStaticDefence(2, 1, 5)], // Patriot Missile
     ["GAWALL", new AntiGroundStaticDefence(0, 0, 0, 0)], // Walls
 
-    ["E1", new BasicGroundUnit(2, 2, 0.2, 0)], // GI
+    ["E1", new BasicGroundUnit(2, 2, 0.2, 0, 6)], // GI - 最多6个
     ["ENGINEER", new BasicGroundUnit(1, 0, 0)], // Engineer
     ["MTNK", new BasicGroundUnit(10, 3, 2, 0)], // Grizzly Tank
     ["MGTK", new BasicGroundUnit(10, 1, 2.5, 0)], // Mirage Tank
-    ["FV", new BasicGroundUnit(5, 2, 0.5, 1)], // IFV
+    ["FV", new BasicGroundUnit(5, 2, 0.5, 1, 4)], // IFV - 最多4个
     ["JUMPJET", new BasicAirUnit(10, 1, 1, 1)], // Rocketeer
     ["ORCA", new BasicAirUnit(7, 1, 2, 0)], // Rocketeer
     ["SREF", new ArtilleryUnit(10, 5, 3, 3)], // Prism Tank

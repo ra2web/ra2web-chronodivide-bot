@@ -61,6 +61,10 @@ export class CombatSquad implements Squad {
         this.targetArea = targetArea;
     }
 
+    public getAttackArea(): Vector2 {
+        return this.targetArea;
+    }
+
     public onAiUpdate(
         gameApi: GameApi,
         actionsApi: ActionsApi,

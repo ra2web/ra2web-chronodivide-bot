@@ -217,6 +217,19 @@ export type MissionActionReleaseUnits = {
     unitIds: number[];
 };
 
+export type MissionActionSearchBuildings = {
+    type: "searchBuildings";
+    point: Vector2;
+    radius: number;
+};
+
+export type MissionActionRequestNavalMission = {
+    type: "request_naval_mission";
+    target: Vector2;
+    point: Vector2;
+    radius: number;
+};
+
 export const noop = () =>
     ({
         type: "noop",
@@ -249,10 +262,24 @@ export const isReleaseUnits = (
     a: MissionWithAction<MissionAction>,
 ): a is MissionWithAction<MissionActionReleaseUnits> => a.action.type === "releaseUnits";
 
+export const searchBuildings = (point: Vector2, radius: number) =>
+    ({ type: "searchBuildings", point, radius }) as MissionActionSearchBuildings;
+export const isSearchBuildings = (
+    a: MissionWithAction<MissionAction>,
+): a is MissionWithAction<MissionActionSearchBuildings> => a.action.type === "searchBuildings";
+
+export const requestNavalMission = (target: Vector2, radius: number) =>
+    ({ type: "request_naval_mission", target, point: target, radius }) as MissionActionRequestNavalMission;
+export const isRequestNavalMission = (
+    a: MissionWithAction<MissionAction>,
+): a is MissionWithAction<MissionActionRequestNavalMission> => a.action.type === "request_naval_mission";
+
 export type MissionAction =
     | MissionActionNoop
     | MissionActionDisband
     | MissionActionRequestUnits
     | MissionActionRequestSpecificUnits
     | MissionActionGrabFreeCombatants
-    | MissionActionReleaseUnits;
+    | MissionActionReleaseUnits
+    | MissionActionSearchBuildings
+    | MissionActionRequestNavalMission;

@@ -1,4 +1,4 @@
-import { ActionsApi, GameApi, OrderType, PlayerData, Vector2, TerrainType } from "@chronodivide/game-api";
+import { ActionsApi, GameApi, OrderType, PlayerData, Vector2, TerrainType, FactoryType } from "@chronodivide/game-api";
 import { MissionFactory } from "../missionFactories.js";
 import { MatchAwareness } from "../../awareness.js";
 import { Mission, MissionAction, disbandMission, noop, requestUnits } from "../mission.js";
@@ -202,6 +202,15 @@ export class ScoutingMission extends Mission {
         const landScoutNames = ["ADOG", "DOG", "E1", "E2", "FV", "HTK"];
         const waterScoutNames = ["DEST"];
         
+        // 检查是否发现了敌方船厂
+        const enemyNavalYards = gameApi.getVisibleUnits(playerData.name, "hostile", (r) => r.naval && r.factory !== FactoryType.None);
+        if (enemyNavalYards.length > 0 && !this.isWaterTarget) {
+            this.logger(`发现敌方船厂，切换到水域侦察`);
+            this.isWaterTarget = true;
+            this.setScoutTarget(null, gameApi.getCurrentTick(), gameApi);
+            return requestUnits(waterScoutNames, this.priority * 1.5);  // 提高水域侦察的优先级
+        }
+
         const scoutNames = this.isWaterTarget ? waterScoutNames : landScoutNames;
         const scouts = this.getUnitsOfTypes(gameApi, ...scoutNames);
 
@@ -209,6 +218,15 @@ export class ScoutingMission extends Mission {
         if (scouts.length > 0) {
             const unitTypes = scouts.map(u => u.type).join(', ');
             this.logger(`可用侦察单位: ${unitTypes}`);
+        }
+
+        // 如果我方有船厂但没有水域侦察单位，增加请求水域侦察单位的机会
+        const ownNavalYards = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.naval && r.factory !== FactoryType.None);
+        if (ownNavalYards.length > 0 && !this.isWaterTarget && Math.random() < 0.1) {  // 10%的概率切换到水域侦察
+            this.logger(`检测到我方有船厂，尝试进行水域侦察`);
+            this.isWaterTarget = true;
+            this.setScoutTarget(null, gameApi.getCurrentTick(), gameApi);
+            return requestUnits(waterScoutNames, this.priority);
         }
 
         if ((matchAwareness.getSectorCache().getOverallVisibility() || 0) > 0.9) {
@@ -223,6 +241,15 @@ export class ScoutingMission extends Mission {
                 this.hadUnit = false;
                 this.logger(`侦察单位损失，当前目标尝试次数: ${this.attemptsOnCurrentTarget}/${MAX_ATTEMPTS_PER_TARGET}`);
             }
+
+            // 如果是水域侦察但请求单位失败多次，尝试切换回陆地侦察
+            if (this.isWaterTarget && this.attemptsOnCurrentTarget > MAX_ATTEMPTS_PER_TARGET / 2) {
+                this.logger(`水域侦察单位请求失败多次，暂时切换回陆地侦察`);
+                this.isWaterTarget = false;
+                this.attemptsOnCurrentTarget = 0;
+                return requestUnits(landScoutNames, this.priority);
+            }
+
             this.logger(`请求新的${this.isWaterTarget ? '水域' : '陆地'}侦察单位，优先级: ${this.priority}`);
             return requestUnits(scoutNames, this.priority);
         } else if (this.scoutTarget) {

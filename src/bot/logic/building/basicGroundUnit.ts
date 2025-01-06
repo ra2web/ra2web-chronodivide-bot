@@ -6,8 +6,9 @@ export class BasicGroundUnit implements AiBuildingRules {
     constructor(
         protected basePriority: number,
         protected baseAmount: number,
-        protected antiGroundPower: number = 1, // boolean for now, but will eventually be used in weighting.
+        protected antiGroundPower: number = 1,
         protected antiAirPower: number = 0,
+        protected maxGlobalCount: number | null = null,
     ) {}
 
     getPlacementLocation(
@@ -24,7 +25,12 @@ export class BasicGroundUnit implements AiBuildingRules {
         technoRules: TechnoRules,
         threatCache: GlobalThreat | null,
     ): number {
-        // Units aren't built automatically, but are instead requested by missions.
+        if (this.maxGlobalCount !== null) {
+            const currentCount = game.getVisibleUnits(playerData.name, "self", (r) => r.name === technoRules.name).length;
+            if (currentCount >= this.maxGlobalCount) {
+                return 0;
+            }
+        }
         return 0;
     }
 
@@ -34,6 +40,6 @@ export class BasicGroundUnit implements AiBuildingRules {
         technoRules: TechnoRules,
         threatCache: GlobalThreat | null,
     ): number | null {
-        return null;
+        return this.maxGlobalCount;
     }
 }
