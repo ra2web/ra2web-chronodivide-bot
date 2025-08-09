@@ -224,8 +224,8 @@ export class MatchAwarenessImpl implements MatchAwareness {
                     );
                     
                     if (path && path.length > 0) {
-                        // Select point at 70% position of path
-                        const midPointIndex = Math.floor(path.length / 10 * 3);
+                        // Select point at 10% position of path
+                        const midPointIndex = Math.floor(path.length / 10 * 9);
                         const midTile = path[midPointIndex].tile;
                         this.mainRallyPoint = new Vector2(midTile.rx, midTile.ry);
                         this.logger(`Rally point set to path 70% position: (${midTile.rx}, ${midTile.ry}), path length: ${path.length}`);

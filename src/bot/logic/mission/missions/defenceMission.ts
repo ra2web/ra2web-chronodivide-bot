@@ -122,6 +122,14 @@ export class DefenceMissionFactory implements MissionFactory {
             .filter((unit) => !isOwnedByNeutral(unit)) as UnitData[];
 
         if (enemiesNearSpawn.length > 0) {
+            // Defence triggered: disband any non-locked (i.e. preparing) missions so their units can be reassigned to defence.
+            missionController
+                .getMissions()
+                .filter((m) => m.isUnitsLocked() === false)
+                .forEach((m) => {
+                    logger(`Disbanding preparing mission ${m.getUniqueName()} due to defence activation.`);
+                    missionController.disbandMission(m.getUniqueName());
+                });
             logger(
                 `Starting defence mission, ${
                     enemiesNearSpawn.length
