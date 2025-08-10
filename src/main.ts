@@ -35,7 +35,7 @@ async function main() {
     heckcorners_b_golden.map,hecklvl.map,heckrvr.map,hecktvt.map,isleland.map,jungleofvietnam.map,2_malibu_cliffs_le.map,mojosprt.map,4_montana_dmz_le.map,6_near_ore_far.map,8_near_ore_far.map,
     offensedefense.map,ore2_startfixed.map,rekoool_fast_6players.mpr,rekoool_fast_8players.mpr,riverram.map,tourofegypt.map,unrepent.map,sinkswim_yr_port.map
     */
-    const mapName = "mp10s4.map";
+    const mapName = "mp01t4.map";
     // Bot names must be unique in online mode
     const timestamp = String(Date.now()).substr(-6);
     const botName1 = `Joe${timestamp}`;
@@ -77,7 +77,7 @@ async function main() {
         ...baseSettings,
         online: false,
         agents: [
-            new SupalosaBot(botName1, Countries.RUSSIA, [], false),
+            new SupalosaBot(botName1, Countries.FRANCE, [], false),
             new SupalosaBot(botName4, Countries.RUSSIA, [], true).setDebugMode(true),
         ],
     };

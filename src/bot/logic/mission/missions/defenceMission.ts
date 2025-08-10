@@ -6,6 +6,7 @@ import { MissionFactory } from "../missionFactories.js";
 import { CombatSquad } from "./squads/combatSquad.js";
 import { DebugLogger, isOwnedByNeutral } from "../../common/utils.js";
 import { ActionBatcher } from "../actionBatcher.js";
+import { AttackMission } from "./attackMission.js";
 
 export const MAX_PRIORITY = 100;
 export const PRIORITY_INCREASE_PER_TICK_RATIO = 1.025;
@@ -125,7 +126,7 @@ export class DefenceMissionFactory implements MissionFactory {
             // Defence triggered: disband any non-locked (i.e. preparing) missions so their units can be reassigned to defence.
             missionController
                 .getMissions()
-                .filter((m) => m.isUnitsLocked() === false)
+                .filter((m) => m.isUnitsLocked() === false && !(m instanceof AttackMission && m.isNaval()))
                 .forEach((m) => {
                     logger(`Disbanding preparing mission ${m.getUniqueName()} due to defence activation.`);
                     missionController.disbandMission(m.getUniqueName());

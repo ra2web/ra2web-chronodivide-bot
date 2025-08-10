@@ -7,7 +7,7 @@ export const getNavalCompositions = (
     playerData: PlayerData,
     matchAwareness: MatchAwareness,
 ): UnitComposition => {
-    
+
     const hasNavalYard = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "NAYARD").length > 0;
     const hasAirforce = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "NARADR").length > 0;
     const hasBattleLab = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "NATECH").length > 0;
@@ -16,9 +16,7 @@ export const getNavalCompositions = (
     let composition: UnitComposition = {};
 
     // Dreadnought as advanced unit
-    if (hasBattleLab) {
-        composition.DRED = 1; // Dreadnought as main battle ship
-    }
+    composition.DRED = 1; // Dreadnought as main battle ship
 
     return composition;
 }; 

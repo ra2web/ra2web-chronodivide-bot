@@ -7,18 +7,15 @@ export const getNavalCompositions = (
     playerData: PlayerData,
     matchAwareness: MatchAwareness,
 ): UnitComposition => {
-    
+
     const hasNavalYard = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAYARD").length > 0;
     const hasAirforce = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAAIRC" || r.name === "AMRADR").length > 0;
     const hasBattleLab = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GATECH").length > 0;
 
     // Basic naval formation
     let composition: UnitComposition = {};
-    
-    // Destroyer as basic unit
-    if (hasNavalYard) {
-        composition.DEST = 3; // Destroyer
-    }
+
+    composition.DEST = 3; // Destroyer
 
     // Aegis cruiser as anti-air unit
     if (hasAirforce) {

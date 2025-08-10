@@ -98,7 +98,7 @@ export class AttackMission extends Mission<AttackFailReason> {
         private rallyArea: Vector2,
         private attackArea: Vector2,
         private radius: number,
-    private composition: UnitComposition,
+        private composition: UnitComposition,
         logger: DebugLogger,
         private eventBus: EventBus,
     ) {
@@ -268,18 +268,22 @@ export class AttackMission extends Mission<AttackFailReason> {
         } else {
             if (this.isNavalMission) {
                 this.logger(`[NAVAL_DEBUG] Naval formation ready, starting attack phase`);
+                this.priority = ATTACK_MISSION_INITIAL_PRIORITY; // reset own priority for future ramps
+                this.state = AttackMissionState.Attacking;
+            } else {
+                // Before switching, request escort at the same priority as current main force priority
+                const missingEscortUnits = Object.entries(escortCompositionTarget).filter(([unitType, targetAmount]) => {
+                    return (currentEscortCounts[unitType] || 0) < targetAmount;
+                });
+                const mainPriorityForEscort = this.priority; // use same priority as main
+                this.priority = ATTACK_MISSION_INITIAL_PRIORITY; // reset own priority for future ramps
+                this.state = AttackMissionState.Attacking;
+                if (missingEscortUnits.length > 0) {
+                    return requestUnits(missingEscortUnits.map(([unitName]) => unitName), mainPriorityForEscort);
+                }
+                // If no escort missing, continue
             }
-            // Before switching, request escort at the same priority as current main force priority
-            const missingEscortUnits = Object.entries(escortCompositionTarget).filter(([unitType, targetAmount]) => {
-                return (currentEscortCounts[unitType] || 0) < targetAmount;
-            });
-            const mainPriorityForEscort = this.priority; // use same priority as main
-            this.priority = ATTACK_MISSION_INITIAL_PRIORITY; // reset own priority for future ramps
-            this.state = AttackMissionState.Attacking;
-            if (missingEscortUnits.length > 0) {
-                return requestUnits(missingEscortUnits.map(([unitName]) => unitName), mainPriorityForEscort);
-            }
-            // If no escort missing, continue
+
         }
         return noop();
     }
@@ -338,23 +342,24 @@ export class AttackMission extends Mission<AttackFailReason> {
             }
         }
 
-        // While attacking, keep requesting missing escort at the same priority as main force (ensures production)
-        const escortCompositionTarget: UnitComposition = calculateEscortComposition(gameApi, playerData, matchAwareness);
-        if (Object.keys(escortCompositionTarget).length > 0) {
-            const currentComposition: UnitComposition = countBy(this.getUnitsGameObjectData(gameApi), (unit) => unit.name);
-            const currentEscortCounts: UnitComposition = Object.fromEntries(
-                Object.keys(escortCompositionTarget).map((unitType) => [unitType, currentComposition[unitType] || 0]),
-            );
-            const missingEscortUnits = Object.entries(escortCompositionTarget).filter(([unitType, targetAmount]) => {
-                return (currentEscortCounts[unitType] || 0) < targetAmount;
-            });
-            if (missingEscortUnits.length > 0) {
-                // Ramp priority for escorts if missing, similar to main force
-                this.priority = Math.min(this.priority * ATTACK_MISSION_PRIORITY_RAMP, ATTACK_MISSION_MAX_PRIORITY);
-                return requestUnits(missingEscortUnits.map(([unitName]) => unitName), this.priority);
+        if (!this.isNavalMission) {
+            // While attacking, keep requesting missing escort at the same priority as main force (ensures production)
+            const escortCompositionTarget: UnitComposition = calculateEscortComposition(gameApi, playerData, matchAwareness);
+            if (Object.keys(escortCompositionTarget).length > 0) {
+                const currentComposition: UnitComposition = countBy(this.getUnitsGameObjectData(gameApi), (unit) => unit.name);
+                const currentEscortCounts: UnitComposition = Object.fromEntries(
+                    Object.keys(escortCompositionTarget).map((unitType) => [unitType, currentComposition[unitType] || 0]),
+                );
+                const missingEscortUnits = Object.entries(escortCompositionTarget).filter(([unitType, targetAmount]) => {
+                    return (currentEscortCounts[unitType] || 0) < targetAmount;
+                });
+                if (missingEscortUnits.length > 0) {
+                    // Ramp priority for escorts if missing, similar to main force
+                    this.priority = Math.min(this.priority * ATTACK_MISSION_PRIORITY_RAMP, ATTACK_MISSION_MAX_PRIORITY);
+                    return requestUnits(missingEscortUnits.map(([unitName]) => unitName), this.priority);
+                }
             }
         }
-
         return noop();
     }
 
@@ -386,6 +391,10 @@ export class AttackMission extends Mission<AttackFailReason> {
 
     public getPriority() {
         return this.priority;
+    }
+
+    public isNaval(): boolean {
+        return this.isNavalMission;
     }
 }
 
