@@ -58,6 +58,7 @@ export class QueueController {
     private queueStates: QueueState[] = [];
     private lastRepairCheckAt = 0;
     private navalMode: boolean = false;
+    private lastCancelTicks: Map<QueueType, number> = new Map();
 
     constructor(private eventBus: EventBus) {
         this.eventBus.subscribe((ev) => {
@@ -188,13 +189,17 @@ export class QueueController {
                     threatCache,
                 );
                 let newItemPriority = decision.priority;
-                if (newItemPriority > currentItemPriority * 2) {
+                // debounce to prevent rapid changes in production
+                const lastCancel = this.lastCancelTicks.get(queueType) ?? 0;
+                const cooldownTicks = 900; // about 60 seconds
+                if (newItemPriority > currentItemPriority * 3 && game.getCurrentTick() - lastCancel > cooldownTicks) {
                     logger(
                         `Dequeueing queue ${queueTypeToName(queueData.type)} unit ${currentProduction.name} because ${
                             decision.unit.name
                         } has 2x higher priority.`,
                     );
                     actionsApi.unqueueFromProduction(queueData.type, currentProduction.name, currentProduction.type, 1);
+                    this.lastCancelTicks.set(queueType, game.getCurrentTick());
                 }
             } else {
                 // Not changing our mind, but maybe other queues are more important for now.
