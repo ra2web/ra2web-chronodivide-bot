@@ -197,7 +197,7 @@ export const BUILDING_NAME_TO_RULES = new Map<string, AiBuildingRules>([
     ["GAREFN", new ResourceCollectionBuilding(10, 2)], // Refinery
     ["GAWEAP", new BasicBuilding(15, 2)], // War Factory (cap enforced in QueueController)
     ["GAPILE", new BasicBuilding(12, 1)], // Barracks
-    ["CMIN", new Harvester(15, 4, 2)], // Chrono Miner
+    ["CMIN", new Harvester(15, 3, 2)], // Chrono Miner
     ["GADEPT", new BasicBuilding(1, 1, 10000)], // Repair Depot
     ["GAAIRC", new BasicBuilding(10, 1, 500)], // Airforce Command
     ["AMRADR", new BasicBuilding(10, 1, 500)], // Airforce Command (USA)
@@ -226,7 +226,7 @@ export const BUILDING_NAME_TO_RULES = new Map<string, AiBuildingRules>([
     ["NAREFN", new ResourceCollectionBuilding(10, 2)], // Refinery
     ["NAWEAP", new BasicBuilding(15, 2)], // War Factory (cap enforced in QueueController)
     ["NAHAND", new BasicBuilding(12, 1)], // Barracks
-    ["HARV", new Harvester(15, 4, 2)], // War Miner
+    ["HARV", new Harvester(15, 3, 2)], // War Miner
     ["NADEPT", new BasicBuilding(1, 1, 10000)], // Repair Depot
     ["NARADR", new BasicBuilding(10, 1, 500)], // Radar
     ["NANRCT", new PowerPlant()], // Nuclear Reactor

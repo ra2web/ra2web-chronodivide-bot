@@ -349,7 +349,9 @@ export class AttackMission extends Mission<AttackFailReason> {
                 return (currentEscortCounts[unitType] || 0) < targetAmount;
             });
             if (missingEscortUnits.length > 0) {
-                return requestUnits(missingEscortUnits.map(([unitName]) => unitName), ATTACK_MISSION_INITIAL_PRIORITY);
+                // Ramp priority for escorts if missing, similar to main force
+                this.priority = Math.min(this.priority * ATTACK_MISSION_PRIORITY_RAMP, ATTACK_MISSION_MAX_PRIORITY);
+                return requestUnits(missingEscortUnits.map(([unitName]) => unitName), this.priority);
             }
         }
 
