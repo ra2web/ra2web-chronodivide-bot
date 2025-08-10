@@ -7,6 +7,7 @@ import {
     PlayerData,
     UnitData,
     Vector2,
+    ZoneType,
 } from "@chronodivide/game-api";
 import { MatchAwareness } from "../../../awareness.js";
 import { getAttackWeight, manageAttackMicro, manageMoveMicro } from "./common.js";
@@ -143,6 +144,8 @@ export class CombatSquad implements Squad {
                     .filter((unit): unit is UnitData => !!unit && !isOwnedByNeutral(unit));
 
                 for (const unit of units) {
+                    const isEscortAA = ["FV", "HTK"].includes(unit.name);
+                    const isUnderWaterUnit = ["SUB", "DLPH", "SQD"].includes(unit.name);
                     // Use each unit's own range as scan radius, ensuring long-range units (carriers, etc.) can find targets
                     const unitRange = getRangeForUnit(unit);
                     const unitScanRadius = Math.max(ATTACK_SCAN_AREA, unitRange);
@@ -155,7 +158,23 @@ export class CombatSquad implements Squad {
                         return dist <= unitScanRadius;
                     });
 
-                    const isUnderWaterUnit = ["SUB", "DLPH", "SQD"].includes(unit.name);
+                    // Escort AA behavior: only engage air targets, otherwise follow ground center of mass
+                    if (isEscortAA) {
+                        const airHostiles = nearbyHostiles.filter((h) => h.zone === ZoneType.Air);
+                        const bestAir = maxBy(airHostiles, (target) => getAttackWeight(unit, target));
+                        if (bestAir) {
+                            this.submitActionIfNew(actionBatcher, manageAttackMicro(unit, bestAir));
+                            this.debugLastTarget = `AA ${bestAir.id.toString()}`;
+                        } else if (centerOfMass) {
+                            // Tight follow to ground center of mass, do not spearhead forward
+                            this.submitActionIfNew(actionBatcher, manageMoveMicro(unit, centerOfMass));
+                            this.debugLastTarget = `escort@${centerOfMass.x},${centerOfMass.y}`;
+                        } else {
+                            this.submitActionIfNew(actionBatcher, manageMoveMicro(unit, targetPoint));
+                            this.debugLastTarget = `escort->@${targetPoint.x},${targetPoint.y}`;
+                        }
+                        continue;
+                    }
                     
                     if (isUnderWaterUnit) {
                         logger(`[NAVAL_DEBUG] Underwater unit ${unit.name}(id:${unit.id}) starting to find attack target (scan=${unitScanRadius})`);
