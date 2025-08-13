@@ -9,26 +9,68 @@ export const getAlliedCompositions = (
     productionApi: ProductionApi,
 ): UnitComposition => {
     const canBuild = createCanBuildChecker(productionApi);
+    
+    // 单个单位检查
+    const canBuildInfantry = canBuild("E1");
     const canBuildSniper = canBuild("SNIPE");
     const canBuildRocketeer = canBuild("JUMPJET");
     const canBuildTankDestroyer = canBuild("TNKD");
+    const canBuildTanks = canBuild("MTNK");
+    const canBuildIFV = canBuild("FV");
+    const canBuildPrismTank = canBuild("SREF");
+    const canBuildMirageTank = canBuild("MGTK");
 
-    const hasBarracks = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAPILE").length > 0;
-    const hasWarFactory = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAWEAP").length > 0;
-    const hasAirforce =
-        gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAAIRC" || r.name === "AMRADR").length > 0;
-    const hasBattleLab = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GATECH").length > 0;
+    const includeInfantry = !canBuildRocketeer && !canBuildPrismTank && canBuildInfantry;
 
-    const includeInfantry = !canBuildRocketeer && !hasBattleLab && hasBarracks;
+    // 构建组合对象
+    const composition: UnitComposition = {};
 
-    return {
-        ...(includeInfantry && { E1: 5 }),
-        ...(canBuildSniper && { SNIPE: 1 }),
-        ...(hasWarFactory && !canBuildRocketeer && { MTNK: 6, FV: 1 }),
-        ...(hasWarFactory && canBuildRocketeer && { MTNK: 3 }),
-        ...(canBuildTankDestroyer && { TNKD: 1 }),
-        // Rocketeer can attack ground; keep as part of main force when available
-        ...(canBuildRocketeer && { JUMPJET: 6, FV: 1 }),
-        ...(hasBattleLab && { SREF: 2, MGTK: 3, FV: 1 }),
-    };
+    // 基础步兵组合
+    if (includeInfantry) {
+        composition.E1 = 5;
+    }
+
+    // 狙击手
+    if (canBuildSniper) {
+        composition.SNIPE = 1;
+    }
+
+    // 坦克+IFV组合 (当没有火箭兵时)
+    if (canBuildTanks && !canBuildRocketeer) {
+        composition.MTNK = 6;
+        if (canBuildIFV) {
+            composition.FV = 1;
+        }
+    }
+
+    // 坦克组合 (当有火箭兵时)
+    if (canBuildTanks && canBuildRocketeer) {
+        composition.MTNK = 3;
+    }
+
+    // 坦克杀手
+    if (canBuildTankDestroyer) {
+        composition.TNKD = 1;
+    }
+
+    // 火箭兵+IFV组合 (火箭兵可以攻击地面，保持为主力)
+    if (canBuildRocketeer) {
+        composition.JUMPJET = 6;
+        if (canBuildIFV) {
+            composition.FV = 1;
+        }
+    }
+
+    // 高级单位组合 (作战实验室科技)
+    if (canBuildPrismTank) {
+        composition.SREF = 2;
+        if (canBuildMirageTank) {
+            composition.MGTK = 3;
+        }
+        if (canBuildIFV) {
+            composition.FV = 1;
+        }
+    }
+
+    return composition;
 };

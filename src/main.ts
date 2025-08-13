@@ -35,7 +35,7 @@ async function main() {
     heckcorners_b_golden.map,hecklvl.map,heckrvr.map,hecktvt.map,isleland.map,jungleofvietnam.map,2_malibu_cliffs_le.map,mojosprt.map,4_montana_dmz_le.map,6_near_ore_far.map,8_near_ore_far.map,
     offensedefense.map,ore2_startfixed.map,rekoool_fast_6players.mpr,rekoool_fast_8players.mpr,riverram.map,tourofegypt.map,unrepent.map,sinkswim_yr_port.map
     */
-    const mapName = "mp01t4.map";
+    const mapName = "killer.map";
     // Bot names must be unique in online mode
     const timestamp = String(Date.now()).substr(-6);
     const botName1 = `Joe${timestamp}`;
@@ -68,7 +68,7 @@ async function main() {
         clientUrl: process.env.CLIENT_URL!,
         agents: [
             new SupalosaBot(process.env.ONLINE_BOT_NAME ?? botName1, Countries.IRAQ).setDebugMode(true),
-            { name: process.env.PLAYER_NAME ?? botName2, country: Countries.GERMANY },
+            { name: process.env.PLAYER_NAME ?? botName2, country: Countries.IRAQ },
         ] as [Bot, ...Agent[]],
         botPassword: process.env.ONLINE_BOT_PASSWORD ?? "default",
     };
@@ -78,7 +78,7 @@ async function main() {
         online: false,
         agents: [
             new SupalosaBot(botName1, Countries.IRAQ, [], false),
-            new SupalosaBot(botName4, Countries.GERMANY, [], true).setDebugMode(true),
+            new SupalosaBot(botName4, Countries.IRAQ, [], true).setDebugMode(true),
         ],
     };
 
