@@ -1,6 +1,6 @@
 import { GameApi, PlayerData, ProductionApi } from "@chronodivide/game-api";
 import { MatchAwareness } from "../awareness";
-import { UnitComposition } from "./common";
+import { createCanBuildChecker, UnitComposition } from "./common.js";
 
 export const getAlliedCompositions = (
     gameApi: GameApi,
@@ -8,20 +8,27 @@ export const getAlliedCompositions = (
     matchAwareness: MatchAwareness,
     productionApi: ProductionApi,
 ): UnitComposition => {
+    const canBuild = createCanBuildChecker(productionApi);
+    const canBuildSniper = canBuild("SNIPE");
+    const canBuildRocketeer = canBuild("JUMPJET");
+    const canBuildTankDestroyer = canBuild("TNKD");
+
     const hasBarracks = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAPILE").length > 0;
     const hasWarFactory = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAWEAP").length > 0;
     const hasAirforce =
         gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAAIRC" || r.name === "AMRADR").length > 0;
     const hasBattleLab = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GATECH").length > 0;
 
-    const includeInfantry = !hasAirforce && !hasBattleLab && hasBarracks;
+    const includeInfantry = !canBuildRocketeer && !hasBattleLab && hasBarracks;
+
     return {
         ...(includeInfantry && { E1: 5 }),
-        // Ground-first main force; AA (IFV) moved to escort composition
-        ...(hasWarFactory && !hasAirforce && { MTNK: 6, FV: 1 }),
-        ...(hasWarFactory && hasAirforce && { MTNK: 3 }),
+        ...(canBuildSniper && { SNIPE: 1 }),
+        ...(hasWarFactory && !canBuildRocketeer && { MTNK: 6, FV: 1 }),
+        ...(hasWarFactory && canBuildRocketeer && { MTNK: 3 }),
+        ...(canBuildTankDestroyer && { TNKD: 1 }),
         // Rocketeer can attack ground; keep as part of main force when available
-        ...(hasAirforce && { JUMPJET: 6, FV: 1 }),
+        ...(canBuildRocketeer && { JUMPJET: 6, FV: 1 }),
         ...(hasBattleLab && { SREF: 2, MGTK: 3, FV: 1 }),
     };
 };
