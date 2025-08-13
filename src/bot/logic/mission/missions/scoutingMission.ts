@@ -1,4 +1,4 @@
-import { ActionsApi, GameApi, OrderType, PlayerData, Vector2, SpeedType } from "@chronodivide/game-api";
+import { ActionsApi, GameApi, OrderType, PlayerData, ProductionApi, Vector2, SpeedType } from "@chronodivide/game-api";
 import { MissionFactory } from "../missionFactories.js";
 import { MatchAwareness } from "../../awareness.js";
 import { Mission, MissionAction, disbandMission, noop, requestUnits } from "../mission.js";
@@ -44,6 +44,7 @@ export class ScoutingMission extends Mission {
 
     public _onAiUpdate(
         gameApi: GameApi,
+        productionApi: ProductionApi,
         actionsApi: ActionsApi,
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
@@ -174,6 +175,7 @@ export class ScoutingMissionFactory implements MissionFactory {
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
         missionController: MissionController,
+        productionApi: ProductionApi,
         logger: DebugLogger,
     ): void {
         if (gameApi.getCurrentTick() < this.lastScoutAt + SCOUT_COOLDOWN_TICKS) {

@@ -3,6 +3,7 @@ import {
     GameApi,
     GameObjectData,
     PlayerData,
+    ProductionApi,
     TechnoRules,
     Tile,
     UnitData,
@@ -70,18 +71,20 @@ export abstract class Mission<FailureReasons = undefined> {
 
     public onAiUpdate(
         gameApi: GameApi,
+        productionApi: ProductionApi,
         actionsApi: ActionsApi,
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
         actionBatcher: ActionBatcher,
     ): MissionAction {
         this.updateCenterOfMass(gameApi);
-        return this._onAiUpdate(gameApi, actionsApi, playerData, matchAwareness, actionBatcher);
+        return this._onAiUpdate(gameApi, productionApi, actionsApi, playerData, matchAwareness, actionBatcher);
     }
 
     // TODO: fix this weird indirection
     abstract _onAiUpdate(
         gameApi: GameApi,
+        productionApi: ProductionApi,
         actionsApi: ActionsApi,
         playerData: PlayerData,
         matchAwareness: MatchAwareness,

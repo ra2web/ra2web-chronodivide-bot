@@ -2,6 +2,7 @@ import {
     ActionsApi,
     GameApi,
     PlayerData,
+    ProductionApi,
     UnitData,
     Vector2,
 } from "@chronodivide/game-api";
@@ -46,6 +47,7 @@ export class HarvesterDefenceMission extends Mission<null> {
 
     _onAiUpdate(
         gameApi: GameApi,
+        productionApi: ProductionApi,
         actionsApi: ActionsApi,
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
@@ -123,6 +125,7 @@ export class HarvesterDefenceMissionFactory implements MissionFactory {
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
         missionController: MissionController,
+        productionApi: ProductionApi,
         logger: DebugLogger,
     ): void {
         if (gameApi.getCurrentTick() < this.lastCheckAt + HARVESTER_DEFENCE_CHECK_TICKS) {

@@ -1,11 +1,12 @@
-import { GameApi, PlayerData } from "@chronodivide/game-api";
+import { GameApi, PlayerData, ProductionApi } from "@chronodivide/game-api";
 import { MatchAwareness } from "../awareness";
-import { UnitComposition } from "./common";
+import { UnitComposition, createCanBuildChecker } from "./common";
 
 export const getSovietComposition = (
     gameApi: GameApi,
     playerData: PlayerData,
     matchAwareness: MatchAwareness,
+    productionApi: ProductionApi,
 ): UnitComposition => {
     const hasBarracks = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "NAHAND").length > 0;
     const hasWarFactory = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "NAWEAP").length > 0;

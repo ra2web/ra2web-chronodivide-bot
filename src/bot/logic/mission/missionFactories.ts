@@ -1,4 +1,4 @@
-import { GameApi, PlayerData } from "@chronodivide/game-api";
+import { GameApi, PlayerData, ProductionApi } from "@chronodivide/game-api";
 import { ExpansionMissionFactory } from "./missions/expansionMission.js";
 import { Mission } from "./mission.js";
 import { MatchAwareness } from "../awareness.js";
@@ -33,6 +33,7 @@ export interface MissionFactory {
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
         missionController: MissionController,
+        productionApi: ProductionApi,
         logger: DebugLogger,
     ): void;
 

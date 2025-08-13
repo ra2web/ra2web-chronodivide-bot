@@ -86,6 +86,7 @@ export class QueueController {
                 playerData,
                 unitTypeRequests,
                 logger,
+                queueType,
             );
             const topItem = items.length > 0 ? items[items.length - 1] : undefined;
             return {
@@ -187,6 +188,7 @@ export class QueueController {
                     game,
                     playerData,
                     threatCache,
+                    queueType,
                 );
                 let newItemPriority = decision.priority;
                 // debounce to prevent rapid changes in production
@@ -235,6 +237,7 @@ export class QueueController {
         playerData: PlayerData,
         unitTypeRequests: Map<string, number>,
         logger: DebugLogger,
+        queueType: QueueType,
     ): TechnoRulesWithPriority[] {
         let priorityQueue: TechnoRulesWithPriority[] = [];
         options.forEach((option) => {
@@ -260,7 +263,7 @@ export class QueueController {
                     }
                 }
             }
-            const calculatedPriority = this.getPriorityForBuildingOption(option, game, playerData, threatCache);
+            const calculatedPriority = this.getPriorityForBuildingOption(option, game, playerData, threatCache, queueType);
             // Get the higher of the dynamic and the mission priority for the unit.
             const actualPriority = Math.max(
                 calculatedPriority,
@@ -281,15 +284,29 @@ export class QueueController {
         game: GameApi,
         playerStatus: PlayerData,
         threatCache: GlobalThreat | null,
+        queueType: QueueType,
     ) {
         if (BUILDING_NAME_TO_RULES.has(option.name)) {
             let logic = BUILDING_NAME_TO_RULES.get(option.name)!;
             return logic.getPriority(game, playerStatus, option, threatCache);
         } else {
-            // Fallback priority when there are no rules.
-            return (
-                DEFAULT_BUILDING_PRIORITY - game.getVisibleUnits(playerStatus.name, "self", (r) => r == option).length
-            );
+            // Enhanced fallback priority for unknown buildings
+            const existingCount = game.getVisibleUnits(playerStatus.name, "self", (r) => r == option).length;
+            
+            // For Structures and Armory types, try to build at least one of each unknown building
+            // This allows the bot to experiment with buildings not explicitly defined in BUILDING_NAME_TO_RULES
+            if (queueType === QueueType.Structures || queueType === QueueType.Armory) {
+                if (existingCount === 0) {
+                    // Give a positive priority to build at least one of each unknown building
+                    return 1;
+                } else {
+                    // Already have one, lower priority to avoid building multiple copies
+                    return DEFAULT_BUILDING_PRIORITY - existingCount;
+                }
+            } else {
+                // For other types (Infantry, Vehicles, etc.), use the original fallback logic
+                return DEFAULT_BUILDING_PRIORITY - existingCount;
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-import { GameApi, PlayerData } from "@chronodivide/game-api";
+import { GameApi, PlayerData, ProductionApi } from "@chronodivide/game-api";
 import { MatchAwareness } from "../awareness";
 import { UnitComposition } from "./common";
 
@@ -6,6 +6,7 @@ export const getAlliedCompositions = (
     gameApi: GameApi,
     playerData: PlayerData,
     matchAwareness: MatchAwareness,
+    productionApi: ProductionApi,
 ): UnitComposition => {
     const hasBarracks = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAPILE").length > 0;
     const hasWarFactory = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAWEAP").length > 0;

@@ -3,6 +3,7 @@ import {
     GameApi,
     OrderType,
     PlayerData,
+    ProductionApi,
     Vector2,
 } from "@chronodivide/game-api";
 import { Mission, MissionAction, requestUnits, noop, disbandMission } from "../mission.js";
@@ -47,6 +48,7 @@ export class DreadEscortMission extends Mission<null> {
 
     _onAiUpdate(
         gameApi: GameApi,
+        productionApi: ProductionApi,
         actionsApi: ActionsApi,
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
@@ -97,6 +99,7 @@ export class DreadEscortMissionFactory implements MissionFactory {
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
         missionController: MissionController,
+        productionApi: ProductionApi,
         logger: DebugLogger,
     ): void {
         // Find all visible friendly dreadnoughts.

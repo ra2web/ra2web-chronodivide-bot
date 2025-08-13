@@ -3,6 +3,7 @@ import {
     OrderType,
     GameApi,
     PlayerData,
+    ProductionApi,
     Vector2,
     SideType,
     SpeedType,
@@ -142,6 +143,7 @@ export class AntiShipyardMission extends Mission<null> {
 
     _onAiUpdate(
         gameApi: GameApi,
+        productionApi: ProductionApi,
         actionsApi: ActionsApi,
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
@@ -378,6 +380,7 @@ export class AntiShipyardMissionFactory implements MissionFactory {
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
         missionController: MissionController,
+        productionApi: ProductionApi,
         logger: DebugLogger,
     ): void {
         // Skip if already exists

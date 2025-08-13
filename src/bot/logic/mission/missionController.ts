@@ -1,7 +1,7 @@
 // Meta-controller for forming and controlling missions.
 // Missions are groups of zero or more units that aim to accomplish a particular goal.
 
-import { ActionsApi, GameApi, GameObjectData, ObjectType, PlayerData, UnitData, Vector2 } from "@chronodivide/game-api";
+import { ActionsApi, GameApi, GameObjectData, ObjectType, PlayerData, ProductionApi, UnitData, Vector2 } from "@chronodivide/game-api";
 import {
     Mission,
     MissionAction,
@@ -68,6 +68,7 @@ export class MissionController {
 
     public onAiUpdate(
         gameApi: GameApi,
+        productionApi: ProductionApi,
         actionsApi: ActionsApi,
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
@@ -83,7 +84,7 @@ export class MissionController {
         // Poll missions for requested actions.
         const missionActions: MissionWithAction<any>[] = this.missions.map((mission) => ({
             mission,
-            action: mission.onAiUpdate(gameApi, actionsApi, playerData, matchAwareness, actionBatcher),
+            action: mission.onAiUpdate(gameApi, productionApi, actionsApi, playerData, matchAwareness, actionBatcher),
         }));
 
         // Handle disbands and merges FIRST
@@ -304,7 +305,7 @@ export class MissionController {
 
         // Create dynamic missions.
         this.missionFactories.forEach((missionFactory) => {
-            missionFactory.maybeCreateMissions(gameApi, playerData, matchAwareness, this, this.logger);
+            missionFactory.maybeCreateMissions(gameApi, playerData, matchAwareness, this, productionApi, this.logger);
             disbandedMissionsArray.forEach(({ reason, mission }) => {
                 missionFactory.onMissionFailed(gameApi, playerData, matchAwareness, mission, reason, this, this.logger);
             });

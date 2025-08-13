@@ -1,4 +1,4 @@
-import { ActionsApi, GameApi, ObjectType, PlayerData, SideType, UnitData, Vector2, SpeedType, LandType } from "@chronodivide/game-api";
+import { ActionsApi, GameApi, ObjectType, PlayerData, ProductionApi, SideType, UnitData, Vector2, SpeedType, LandType } from "@chronodivide/game-api";
 import { CombatSquad } from "./squads/combatSquad.js";
 import { Mission, MissionAction, disbandMission, noop, requestUnits } from "../mission.js";
 import { MissionFactory } from "../missionFactories.js";
@@ -36,6 +36,7 @@ function calculateTargetComposition(
     gameApi: GameApi,
     playerData: PlayerData,
     matchAwareness: MatchAwareness,
+    productionApi: ProductionApi,
     useNaval: boolean = false,
 ): UnitComposition {
     if (!playerData.country) {
@@ -45,14 +46,14 @@ function calculateTargetComposition(
     // If specified to use naval formation
     if (useNaval) {
         return playerData.country.side === SideType.Nod
-            ? getSovietNavalCompositions(gameApi, playerData, matchAwareness)  // Soviet Navy
-            : getAlliedNavalCompositions(gameApi, playerData, matchAwareness);  // Allied Navy
+            ? getSovietNavalCompositions(gameApi, playerData, matchAwareness, productionApi)  // Soviet Navy
+            : getAlliedNavalCompositions(gameApi, playerData, matchAwareness, productionApi);  // Allied Navy
     }
 
     // Use land formation by default
     return playerData.country.side === SideType.Nod
-        ? getSovietComposition(gameApi, playerData, matchAwareness)
-        : getAlliedCompositions(gameApi, playerData, matchAwareness);
+        ? getSovietComposition(gameApi, playerData, matchAwareness, productionApi)
+        : getAlliedCompositions(gameApi, playerData, matchAwareness, productionApi);
 }
 
 function calculateEscortComposition(
@@ -162,6 +163,7 @@ export class AttackMission extends Mission<AttackFailReason> {
 
     _onAiUpdate(
         gameApi: GameApi,
+        productionApi: ProductionApi,
         actionsApi: ActionsApi,
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
@@ -169,7 +171,7 @@ export class AttackMission extends Mission<AttackFailReason> {
     ): MissionAction {
         switch (this.state) {
             case AttackMissionState.Preparing:
-                return this.handlePreparingState(gameApi, actionsApi, playerData, matchAwareness, actionBatcher);
+                return this.handlePreparingState(gameApi, productionApi, actionsApi, playerData, matchAwareness, actionBatcher);
             case AttackMissionState.Attacking:
                 return this.handleAttackingState(gameApi, actionsApi, playerData, matchAwareness, actionBatcher);
             case AttackMissionState.Retreating:
@@ -179,6 +181,7 @@ export class AttackMission extends Mission<AttackFailReason> {
 
     private handlePreparingState(
         gameApi: GameApi,
+        productionApi: ProductionApi,
         actionsApi: ActionsApi,
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
@@ -198,7 +201,7 @@ export class AttackMission extends Mission<AttackFailReason> {
             }
             this.navalModeStartTick = gameApi.getCurrentTick();
             this.navalYardRequestAttempts = 0;
-            this.composition = calculateTargetComposition(gameApi, playerData, matchAwareness, true);
+            this.composition = calculateTargetComposition(gameApi, playerData, matchAwareness, productionApi, true);
             this.logger("Switched to naval formation");
             this.logger(`[NAVAL_DEBUG] Naval formation composition: ${JSON.stringify(this.composition)}`);
             return noop();
@@ -219,7 +222,7 @@ export class AttackMission extends Mission<AttackFailReason> {
                 this.isNavalMission = false;
                 this.eventBus.publish({ type: "modeChanged", player: playerData.name, isNaval: false });
                 this.priority = ATTACK_MISSION_INITIAL_PRIORITY;
-                this.composition = calculateTargetComposition(gameApi, playerData, matchAwareness, false);
+                this.composition = calculateTargetComposition(gameApi, playerData, matchAwareness, productionApi, false);
                 return noop();
             }
         }
@@ -236,7 +239,7 @@ export class AttackMission extends Mission<AttackFailReason> {
                 if (this.unsubscribeFromEvents) { this.unsubscribeFromEvents(); this.unsubscribeFromEvents = null; }
                 this.isNavalMission = false;
                 this.eventBus.publish({ type: "modeChanged", player: playerData.name, isNaval: false });
-                this.composition = calculateTargetComposition(gameApi, playerData, matchAwareness, false);
+                this.composition = calculateTargetComposition(gameApi, playerData, matchAwareness, productionApi, false);
                 return noop();
             }
             if (this.navalYardRequestAttempts < this.MAX_NAVAL_YARD_ATTEMPTS) {
@@ -524,6 +527,7 @@ export class AttackMissionFactory implements MissionFactory {
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
         missionController: MissionController,
+        productionApi: ProductionApi,
         logger: DebugLogger,
     ): void {
         if (gameApi.getCurrentTick() < this.lastAttackAt + VISIBLE_TARGET_ATTACK_COOLDOWN_TICKS) {
@@ -554,7 +558,7 @@ export class AttackMissionFactory implements MissionFactory {
 
         const squadName = "attack_" + gameApi.getCurrentTick();
 
-        const composition: UnitComposition = calculateTargetComposition(gameApi, playerData, matchAwareness);
+        const composition: UnitComposition = calculateTargetComposition(gameApi, playerData, matchAwareness, productionApi);
 
         const tryAttack = missionController.addMission(
             new AttackMission(

@@ -1,4 +1,4 @@
-import { ActionsApi, GameApi, OrderType, PlayerData, Vector2, SpeedType, LandType } from "@chronodivide/game-api";
+import { ActionsApi, GameApi, OrderType, PlayerData, ProductionApi, Vector2, SpeedType, LandType } from "@chronodivide/game-api";
 import { MissionFactory } from "../missionFactories.js";
 import { MatchAwareness } from "../../awareness.js";
 import { Mission, MissionAction, disbandMission, noop, requestUnits } from "../mission.js";
@@ -111,6 +111,7 @@ export class AmphibiousScoutingMission extends Mission {
 
     public _onAiUpdate(
         gameApi: GameApi,
+        productionApi: ProductionApi,
         actionsApi: ActionsApi,
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
@@ -250,6 +251,7 @@ export class AmphibiousScoutingMissionFactory implements MissionFactory {
         playerData: PlayerData,
         matchAwareness: MatchAwareness,
         missionController: MissionController,
+        productionApi: ProductionApi,
         logger: DebugLogger,
     ): void {
         // Only create amphibious scouting missions if in naval mode

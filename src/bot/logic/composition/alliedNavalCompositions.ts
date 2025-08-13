@@ -1,11 +1,12 @@
-import { GameApi, PlayerData } from "@chronodivide/game-api";
+import { GameApi, PlayerData, ProductionApi } from "@chronodivide/game-api";
 import { MatchAwareness } from "../awareness";
-import { UnitComposition } from "./common";
+import { UnitComposition, createCanBuildChecker } from "./common";
 
 export const getNavalCompositions = (
     gameApi: GameApi,
     playerData: PlayerData,
     matchAwareness: MatchAwareness,
+    productionApi: ProductionApi,
 ): UnitComposition => {
 
     const hasNavalYard = gameApi.getVisibleUnits(playerData.name, "self", (r) => r.name === "GAYARD").length > 0;
