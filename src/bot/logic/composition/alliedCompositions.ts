@@ -17,10 +17,10 @@ export const getAlliedCompositions = (
     return {
         ...(includeInfantry && { E1: 5 }),
         // Ground-first main force; AA (IFV) moved to escort composition
-        ...(hasWarFactory && !hasAirforce && { MTNK: 8 }),
+        ...(hasWarFactory && !hasAirforce && { MTNK: 6, FV: 1 }),
         ...(hasWarFactory && hasAirforce && { MTNK: 3 }),
         // Rocketeer can attack ground; keep as part of main force when available
-        ...(hasAirforce && { JUMPJET: 6 }),
-        ...(hasBattleLab && { SREF: 2, MGTK: 3 }),
+        ...(hasAirforce && { JUMPJET: 6, FV: 1 }),
+        ...(hasBattleLab && { SREF: 2, MGTK: 3, FV: 1 }),
     };
 };

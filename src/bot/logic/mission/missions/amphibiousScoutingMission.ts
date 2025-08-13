@@ -24,16 +24,7 @@ function getAllAmphibiousPoints(gameApi: GameApi, sectorSize: number = 8): Vecto
             if (x >= 0 && x < mapBounds.width && y >= 0 && y < mapBounds.height) {
                 const tile = gameApi.mapApi.getTile(x, y);
                 if (tile && gameApi.mapApi.isPassableTile(tile, SpeedType.Amphibious, false, false)) {
-                    // Ensure this point is passable
-                    const path = gameApi.mapApi.findPath( 
-                        SpeedType.Amphibious,
-                        true,
-                        { tile: tile, onBridge: false },
-                        { tile: tile, onBridge: false }
-                    );
-                    if (path) {
-                        amphibiousPoints.push(new Vector2(x, y));
-                    }
+                    amphibiousPoints.push(new Vector2(x, y));
                 }
             }
         }

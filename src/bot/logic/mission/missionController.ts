@@ -86,7 +86,7 @@ export class MissionController {
             action: mission.onAiUpdate(gameApi, actionsApi, playerData, matchAwareness, actionBatcher),
         }));
 
-        // Handle disbands and merges.
+        // Handle disbands and merges FIRST
         const disbandedMissions: Map<string, any> = new Map();
         const disbandedMissionsArray: { mission: Mission<any>; reason: any }[] = [];
         this.forceDisbandedMissions.forEach((name) => disbandedMissions.set(name, null));
@@ -100,8 +100,18 @@ export class MissionController {
             disbandedMissions.set(a.mission.getUniqueName(), (a.action as MissionActionDisband).reason);
         });
 
-        // Handle unit requests.
+        // Remove disbanded missions immediately
+        this.missions
+            .filter((missions) => disbandedMissions.has(missions.getUniqueName()))
+            .forEach((disbandedMission) => {
+                const reason = disbandedMissions.get(disbandedMission.getUniqueName());
+                this.logger(`mission disbanded: ${disbandedMission.getUniqueName()}, reason: ${reason}`);
+                disbandedMissionsArray.push({ mission: disbandedMission, reason });
+                disbandedMission.endMission(disbandedMissions.get(disbandedMission.getUniqueName()));
+            });
+        this.missions = this.missions.filter((missions) => !disbandedMissions.has(missions.getUniqueName()));
 
+        // Then handle unit requests (releases, specific requests, type requests, grab requests)
         // Release units
         missionActions.filter(isReleaseUnits).forEach((a) => {
             a.action.unitIds.forEach((unitId) => {
@@ -291,17 +301,6 @@ export class MissionController {
 
         // Send all actions that can be batched together.
         actionBatcher.resolve(actionsApi);
-
-        // Remove disbanded and merged missions.
-        this.missions
-            .filter((missions) => disbandedMissions.has(missions.getUniqueName()))
-            .forEach((disbandedMission) => {
-                const reason = disbandedMissions.get(disbandedMission.getUniqueName());
-                this.logger(`mission disbanded: ${disbandedMission.getUniqueName()}, reason: ${reason}`);
-                disbandedMissionsArray.push({ mission: disbandedMission, reason });
-                disbandedMission.endMission(disbandedMissions.get(disbandedMission.getUniqueName()));
-            });
-        this.missions = this.missions.filter((missions) => !disbandedMissions.has(missions.getUniqueName()));
 
         // Create dynamic missions.
         this.missionFactories.forEach((missionFactory) => {

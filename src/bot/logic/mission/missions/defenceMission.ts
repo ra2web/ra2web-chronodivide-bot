@@ -1,7 +1,7 @@
 import { ActionsApi, GameApi, PlayerData, UnitData, Vector2 } from "@chronodivide/game-api";
 import { MatchAwareness } from "../../awareness.js";
 import { MissionController } from "../missionController.js";
-import { Mission, MissionAction, grabCombatants, noop, releaseUnits, requestUnits } from "../mission.js";
+import { Mission, MissionAction, grabCombatants, noop, releaseUnits, requestUnits, disbandMission } from "../mission.js";
 import { MissionFactory } from "../missionFactories.js";
 import { CombatSquad } from "./squads/combatSquad.js";
 import { DebugLogger, isOwnedByNeutral } from "../../common/utils.js";
@@ -16,6 +16,8 @@ export const PRIORITY_INCREASE_PER_TICK_RATIO = 1.025;
  */
 export class DefenceMission extends Mission<CombatSquad> {
     private squad: CombatSquad;
+    private idleTicks: number = 0;
+    private readonly IDLE_DISBAND_THRESHOLD: number = 90; // Adjust as needed
 
     constructor(
         uniqueName: string,
@@ -58,6 +60,11 @@ export class DefenceMission extends Mission<CombatSquad> {
 
         if (foundTargets.length === 0) {
             this.priority = 0;
+            this.idleTicks++;
+            if (this.idleTicks >= this.IDLE_DISBAND_THRESHOLD && this.getUnitIds().length === 0) {
+                this.logger(`(Defence Mission ${this.getUniqueName()}): No threats for ${this.idleTicks} ticks and no units, disbanding.`);
+                return disbandMission();
+            }
             if (this.getUnitIds().length > 0) {
                 this.logger(`(Defence Mission ${this.getUniqueName()}): No targets found, releasing units.`);
                 return releaseUnits(this.getUnitIds());
@@ -65,6 +72,7 @@ export class DefenceMission extends Mission<CombatSquad> {
                 return noop();
             }
         } else {
+            this.idleTicks = 0; // Reset counter
             const targetUnit = foundTargets[0];
             this.logger(
                 `(Defence Mission ${this.getUniqueName()}): Focused on target ${targetUnit?.name} (${

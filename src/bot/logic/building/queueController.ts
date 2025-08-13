@@ -266,8 +266,9 @@ export class QueueController {
                 calculatedPriority,
                 unitTypeRequests.get(option.name) ?? calculatedPriority,
             );
+            const randomizedPriority = actualPriority + game.generateRandom() * 0.00001;
             if (actualPriority > 0) {
-                priorityQueue.push({ unit: option, priority: actualPriority });
+                priorityQueue.push({ unit: option, priority: randomizedPriority });
             }
         });
 

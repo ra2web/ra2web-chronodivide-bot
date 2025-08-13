@@ -15,9 +15,8 @@ export const getSovietComposition = (
     const includeInfantry = !hasBattleLab && hasBarracks;
     return {
         ...(includeInfantry && { E2: 10 }),
-        // Ground-first main force; AA (HTK) moved to escort composition
-        ...(hasWarFactory && { HTNK: 5 }),
-        ...(hasRadar && { V3: 1 }),
+        ...(hasWarFactory && { HTNK: 5, HTK: 1 }),
+        ...(hasRadar && { V3: 1, HTK: 1 }),
         ...(hasBattleLab && { APOC: 2 }),
     };
 };

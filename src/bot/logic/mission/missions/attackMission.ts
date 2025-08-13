@@ -261,8 +261,13 @@ export class AttackMission extends Mission<AttackFailReason> {
                 this.logger(`[NAVAL_DEBUG] Missing naval units: ${JSON.stringify(missingUnits)}`);
             }
             this.priority = Math.min(this.priority * ATTACK_MISSION_PRIORITY_RAMP, ATTACK_MISSION_MAX_PRIORITY);
+            const unitsToRequest = missingUnits.map(([unitName]) => unitName);
+            this.logger(`Requesting units: ${JSON.stringify(unitsToRequest)}`);
+            if (unitsToRequest.includes("HTK")) {
+                this.logger(`[DEBUG] Requesting HTK`);
+            }
             return requestUnits(
-                missingUnits.map(([unitName]) => unitName),
+                unitsToRequest,
                 this.priority,
             );
         } else {
