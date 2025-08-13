@@ -1,4 +1,4 @@
-import { ActionsApi, GameApi, OrderType, PlayerData, Vector2 } from "@chronodivide/game-api";
+import { ActionsApi, GameApi, OrderType, PlayerData, Vector2, SpeedType } from "@chronodivide/game-api";
 import { MissionFactory } from "../missionFactories.js";
 import { MatchAwareness } from "../../awareness.js";
 import { Mission, MissionAction, disbandMission, noop, requestUnits } from "../mission.js";
@@ -8,11 +8,12 @@ import { DebugLogger } from "../../common/utils.js";
 import { ActionBatcher } from "../actionBatcher.js";
 import { getDistanceBetweenTileAndPoint } from "../../map/map.js";
 import { PrioritisedScoutTarget } from "../../common/scout.js";
+import { isPointReachable } from "../../map/pathfinding.js";
 
 const SCOUT_MOVE_COOLDOWN_TICKS = 30;
 
 // Max units to spend on a particular scout target.
-const MAX_ATTEMPTS_PER_TARGET = 5;
+const MAX_ATTEMPTS_PER_TARGET = 3;
 
 // Maximum ticks to spend trying to scout a target *without making progress towards it*.
 // Every time a unit gets closer to the target, the timer refreshes.
@@ -72,7 +73,30 @@ export class ScoutingMission extends Mission {
                     this.setScoutTarget(null, 0);
                     return noop();
                 }
-                if (gameApi.getCurrentTick() > this.scoutTargetRefreshedAt + MAX_TICKS_PER_TARGET) {
+                
+                // Check if target is reachable before applying time limit
+                let shouldApplyTimeLimit = true;
+                if (scouts.length > 0) {
+                    // Use the first scout's position to check reachability
+                    const scoutPosition = new Vector2(scouts[0].tile.rx, scouts[0].tile.ry);
+                    const targetReachable = isPointReachable(
+                        gameApi,
+                        scoutPosition,
+                        this.scoutTarget,
+                        SpeedType.Track,
+                        5, // maxAllowedError = 5 as requested
+                        false
+                    );
+                    
+                    if (targetReachable) {
+                        shouldApplyTimeLimit = false;
+                        this.logger(
+                            `Scout target ${this.scoutTarget.x},${this.scoutTarget.y} is reachable, skipping time limit`
+                        );
+                    }
+                }
+                
+                if (shouldApplyTimeLimit && gameApi.getCurrentTick() > this.scoutTargetRefreshedAt + MAX_TICKS_PER_TARGET) {
                     this.logger(
                         `Scout target ${this.scoutTarget.x},${this.scoutTarget.y} took too long, moving to next`,
                     );

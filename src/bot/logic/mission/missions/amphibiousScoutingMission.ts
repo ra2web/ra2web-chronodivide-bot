@@ -7,6 +7,7 @@ import { DebugLogger } from "../../common/utils.js";
 import { ActionBatcher } from "../actionBatcher.js";
 import { PrioritisedScoutTarget } from "../../common/scout.js";
 import { determineMapBounds, getDistanceBetweenTileAndPoint } from "../../map/map.js";
+import { EventBus } from "../../common/eventBus.js";
 
 const AMPHIBIOUS_SCOUT_MOVE_COOLDOWN_TICKS = 30;
 const MAX_ATTEMPTS_PER_TARGET = 5;
@@ -228,7 +229,17 @@ export class AmphibiousScoutingMission extends Mission {
 }
 
 export class AmphibiousScoutingMissionFactory implements MissionFactory {
-    constructor(private lastScoutAt: number = -300) {}
+    private navalMode: boolean = false;
+
+    constructor(private lastScoutAt: number = -300, private eventBus?: EventBus) {
+        if (this.eventBus) {
+            this.eventBus.subscribe((ev) => {
+                if (ev.type === "modeChanged") {
+                    this.navalMode = ev.isNaval;
+                }
+            });
+        }
+    }
 
     getName(): string {
         return "AmphibiousScoutingMissionFactory";
@@ -241,6 +252,11 @@ export class AmphibiousScoutingMissionFactory implements MissionFactory {
         missionController: MissionController,
         logger: DebugLogger,
     ): void {
+        // Only create amphibious scouting missions if in naval mode
+        if (!this.navalMode) {
+            return;
+        }
+        
         if (gameApi.getCurrentTick() < this.lastScoutAt + 300) {
             return;
         }
@@ -261,6 +277,11 @@ export class AmphibiousScoutingMissionFactory implements MissionFactory {
         missionController: MissionController,
         logger: DebugLogger,
     ): void {
+        // Only recreate amphibious scouting missions if in naval mode
+        if (!this.navalMode) {
+            return;
+        }
+        
         if (gameApi.getCurrentTick() < this.lastScoutAt + 300) {
             return;
         }

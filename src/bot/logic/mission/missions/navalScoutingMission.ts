@@ -7,6 +7,7 @@ import { DebugLogger } from "../../common/utils.js";
 import { ActionBatcher } from "../actionBatcher.js";
 import { PrioritisedScoutTarget } from "../../common/scout.js";
 import { determineMapBounds } from "../../map/map.js";
+import { EventBus } from "../../common/eventBus.js";
 
 const NAVAL_SCOUT_MOVE_COOLDOWN_TICKS = 30;
 const MAX_ATTEMPTS_PER_TARGET = 5;
@@ -299,7 +300,17 @@ export class NavalScoutingMission extends Mission {
 }
 
 export class NavalScoutingMissionFactory implements MissionFactory {
-    constructor(private lastScoutAt: number = -300) {}
+    private navalMode: boolean = false;
+
+    constructor(private lastScoutAt: number = -300, private eventBus?: EventBus) {
+        if (this.eventBus) {
+            this.eventBus.subscribe((ev) => {
+                if (ev.type === "modeChanged") {
+                    this.navalMode = ev.isNaval;
+                }
+            });
+        }
+    }
 
     getName(): string {
         return "NavalScoutingMissionFactory";
@@ -312,6 +323,11 @@ export class NavalScoutingMissionFactory implements MissionFactory {
         missionController: MissionController,
         logger: DebugLogger,
     ): void {
+        // Only create naval scouting missions if in naval mode
+        if (!this.navalMode) {
+            return;
+        }
+        
         // Check every 300 ticks whether to create new naval scouting mission
         if (gameApi.getCurrentTick() < this.lastScoutAt + 300) {
             return;
@@ -333,6 +349,11 @@ export class NavalScoutingMissionFactory implements MissionFactory {
         missionController: MissionController,
         logger: DebugLogger,
     ): void {
+        // Only recreate naval scouting missions if in naval mode
+        if (!this.navalMode) {
+            return;
+        }
+        
         if (gameApi.getCurrentTick() < this.lastScoutAt + 300) {
             return;
         }
